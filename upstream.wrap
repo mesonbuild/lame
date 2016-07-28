@@ -1,0 +1,6 @@
+[wrap-file]
+directory = lame-3.99.5
+
+source_url = http://downloads.sourceforge.net/project/lame/lame/3.99/lame-3.99.5.tar.gz
+source_filename = lame-3.99.5.tar.gz
+source_hash = 24346b4158e4af3bd9f2e194bb23eb473c75fb7377011523353196b19b9a23ff
