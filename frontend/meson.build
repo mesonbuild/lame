@@ -6,21 +6,22 @@ common_sources = [
   'main.c',
   'parse.c',
   'timestatus.c'
-  ]
+]
+
+tools_deps = [lame_dep]
+if host_machine.system() == 'windows'
+  tools_deps += [cc.find_library('ws2_32')]
+endif
 
 lame = executable('lame',
   common_sources, 'lame_main.c',
-  include_directories : [lameinc, confinc],
   c_args : common_args,
-  link_with : lamelib,
-  )
+  dependencies : tools_deps)
 
 mp3rtp = executable('mp3rpt',
   common_sources, 'mp3rtp.c', 'rtp.c',
-  include_directories : [lameinc, confinc],
   c_args : common_args,
-  link_with : lamelib,
-  )
+  dependencies : tools_deps)
 
 # Do not build as it requires GTK+.
 # If someone wants to add this, feel free.

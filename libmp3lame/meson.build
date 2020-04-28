@@ -35,3 +35,8 @@ lamelib = library('mp3lame',
   c_args : common_args,
   dependencies : lame_deps,
   install : true)
+
+lame_dep = declare_dependency(
+  include_directories : [lameinc, confinc],
+  link_with : lamelib,
+  )

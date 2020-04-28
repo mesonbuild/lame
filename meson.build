@@ -155,8 +155,3 @@ subdir('libmp3lame')
 if build_tools
   subdir('frontend')
 endif
-
-lame_dep = declare_dependency(
-  include_directories : lameinc,
-  link_with : lamelib,
-  )
