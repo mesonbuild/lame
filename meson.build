@@ -4,31 +4,35 @@ project('lame', 'c',
         license: 'LGPL-2.1+')
 
 cc = meson.get_compiler('c')
+
+build_tools = get_option('tools')
+
 cdata = configuration_data()
 check_headers = [
-  ['HAVE_ALLOCA_H', 'alloca.h'],
-  ['HAVE_DLFCN_H', 'dlfcn.h'],
+  ['HAVE_CTYPE_H', 'ctype.h'],
   ['HAVE_ERRNO_H', 'errno.h'],
   ['HAVE_FCNTL_H', 'fcntl.h'],
   ['HAVE_INTTYPES_H', 'inttypes.h'],
   ['HAVE_LIMITS_H', 'limits.h'],
-  ['HAVE_LINUX_SOUNDCARD_H', 'linux/soundcard.h'],
-  ['HAVE_MEMORY_H', 'memory.h'],
-  ['HAVE_NCURSES_TERMCAP_H', 'ncurses/termcap.h'],
+  # used by misc/*.c which we don't build right now
+  #['HAVE_LINUX_SOUNDCARD_H', 'linux/soundcard.h'],
+  #['HAVE_SYS_SOUNDCARD_H', 'sys/soundcard.h'],
+  ['HAVE_STDARG_H', 'stdarg.h'],
+  ['HAVE_STDDEF_H', 'stddef.h'],
   ['HAVE_STDINT_H', 'stdint.h'],
+  ['HAVE_STDIO_H', 'stdio.h'],
   ['HAVE_STDLIB_H', 'stdlib.h'],
-  ['HAVE_STRINGS_H', 'strings.h'],
   ['HAVE_STRING_H', 'string.h'],
-  ['HAVE_SYS_SOUNDCARD_H', 'sys/soundcard.h'],
-  ['HAVE_SYS_STAT_H', 'sys/stat.h'],
-  ['HAVE_SYS_TIME_H', 'sys/time.h'],
-  ['HAVE_SYS_TYPES_H', 'sys/types.h'],
-  ['HAVE_TERMCAP_H', 'termcap.h'],
-  ['HAVE_UNISTD_H', 'unistd.h'],
   ['HAVE_XMMINTRIN_H', 'xmmintrin.h'],
 ]
 
-cdata.set('STDC_HEADERS', 1)
+if build_tools
+  check_headers += [
+    ['HAVE_NCURSES_TERMCAP_H', 'ncurses/termcap.h'],
+    ['HAVE_TERMCAP_H', 'termcap.h'],
+    ['HAVE_UNISTD_H', 'unistd.h'],
+  ]
+endif
 
 foreach h : check_headers
   if cc.has_header(h.get(1))
@@ -36,26 +40,40 @@ foreach h : check_headers
   endif
 endforeach
 
+# Approximate autoconf's STDC_HEADERS define
+have_stdc_headers = true
+stdc_headers = [
+  'HAVE_CTYPE_H',
+  'HAVE_STDARG_H',
+  'HAVE_STDDEF_H',
+  'HAVE_STDIO_H',
+  'HAVE_STDINT_H',
+  'HAVE_STDLIB_H',
+  'HAVE_STRING_H',
+]
+foreach h : stdc_headers
+  if not cdata.has(h)
+    have_stdc_headers = false
+  endif
+endforeach
+if have_stdc_headers
+  cdata.set('STDC_HEADERS', 1)
+endif
+
 check_functions = [
-  ['HAVE_ALLOCA', 'alloca', '#include<alloca.h>'],
-# check token HAVE_EFENCE
-  ['HAVE_GETTIMEOFDAY', 'gettimeofday', '#include<sys/time.h>'],
 # check token HAVE_ICONV
-# check token HAVE_IEEE754_FLOAT32_T
-# check token HAVE_IEEE754_FLOAT32_T
-# check token HAVE_IEEE754_FLOAT64_T
-# check token HAVE_IEEE754_FLOAT64_T
-# check token HAVE_IEEE854_FLOAT80
-# check token HAVE_IEEE854_FLOAT80_T
-# check token HAVE_IEEE854_FLOAT80_T
-# check token HAVE_LONG_DOUBLE
-# check token HAVE_LONG_DOUBLE_WIDER
 # check token HAVE_MPGLIB
 # check token HAVE_NASM
-  ['HAVE_SOCKET', 'socket', '#include<sys/socket.h>'],
-  ['HAVE_STRTOL', 'strtol', '#include<stdlib.h>'],
-# check token HAVE_TERMCAP
+  ['HAVE_MEMCPY', 'memcpy', '#include<string.h>'],
+  ['HAVE_STRCHR', 'strchr', '#include<string.h>'],
 ]
+
+if build_tools
+  check_functions += [
+    ['HAVE_SOCKET', 'socket', '#include<sys/socket.h>'],
+# check token HAVE_TERMCAP
+  ]
+endif
 
 # HACK
 if cc.has_header('stdint.h')
@@ -75,6 +93,17 @@ foreach f : check_functions
   endif
 endforeach
 
+# These functions are used unconditionally
+need_functions = [
+  ['HAVE_STRTOL', 'strtol', '#include<stdlib.h>'],
+]
+
+foreach f : need_functions
+  if not cc.has_function(f.get(1), prefix : f.get(2))
+    error('Need @0@() from @1@'.format(f.get(1), f.get(2)))
+  endif
+endforeach
+
 cdata.set('SIZEOF_DOUBLE', cc.sizeof('double'))
 cdata.set('SIZEOF_FLOAT', cc.sizeof('float'))
 cdata.set('SIZEOF_INT', cc.sizeof('int'))
@@ -86,9 +115,26 @@ cdata.set('SIZEOF_UNSIGNED_INT', cc.sizeof('unsigned int'))
 cdata.set('SIZEOF_UNSIGNED_LONG', cc.sizeof('unsigned long'))
 cdata.set('SIZEOF_UNSIGNED_LONG_LONG', cc.sizeof('unsigned long long'))
 cdata.set('SIZEOF_UNSIGNED_SHORT', cc.sizeof('unsigned short'))
+cdata.set('ieee754_float32_t', 'float')
+cdata.set('ieee754_float64_t', 'double')
 
-configure_file(input : 'config.h.meson',
-  output : 'config.h',
+have_visibility_hidden = cc.has_argument('-fvisibility=hidden')
+if have_visibility_hidden
+  add_project_arguments('-fvisibility=hidden', language: 'c')
+endif
+
+if cc.get_id() == 'msvc' and get_option('default_library') != 'static'
+  export_define = '__declspec(dllexport) extern'
+elif cc.has_argument('-fvisibility=hidden')
+  add_project_arguments('-fvisibility=hidden', language: 'c')
+  export_define = 'extern __attribute__ ((visibility ("default")))'
+else
+  export_define = 'extern'
+endif
+
+cdata.set('LAME_EXPORT', export_define)
+
+configure_file(output : 'config.h',
   configuration : cdata)
 
 common_args = ['-DHAVE_CONFIG_H']
@@ -98,7 +144,9 @@ confinc = include_directories('.')
 m_dep = cc.find_library('m', required : false)
 
 subdir('libmp3lame')
-subdir('frontend')
+if build_tools
+  subdir('frontend')
+endif
 
 lame_dep = declare_dependency(
   include_directories : lameinc,

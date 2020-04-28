@@ -1,0 +1,2 @@
+option('tools', type : 'boolean', value : false,
+       description : 'Build command-line tools')

@@ -24,8 +24,8 @@ lame_sources = [
 vector_sources = ['vector/xmm_quantize_sub.c']
 
 lamelib = library('mp3lame',
-  version : '0.0.0',
   lame_sources, vector_sources,
+  version : '0.0.0',
   include_directories : [lameinc, confinc],
   c_args : common_args,
   dependencies : m_dep,
