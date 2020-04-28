@@ -6,6 +6,7 @@ project('lame', 'c',
 cc = meson.get_compiler('c')
 
 build_tools = get_option('tools')
+build_decoder = get_option('decoder')
 
 cdata = configuration_data()
 check_headers = [
@@ -60,9 +61,13 @@ if have_stdc_headers
   cdata.set('STDC_HEADERS', 1)
 endif
 
+# Enable the decoder
+if build_decoder
+  cdata.set('HAVE_MPGLIB', 1)
+endif
+
 check_functions = [
 # check token HAVE_ICONV
-# check token HAVE_MPGLIB
 # check token HAVE_NASM
   ['HAVE_MEMCPY', 'memcpy', '#include<string.h>'],
   ['HAVE_STRCHR', 'strchr', '#include<string.h>'],
@@ -143,6 +148,9 @@ confinc = include_directories('.')
 
 m_dep = cc.find_library('m', required : false)
 
+if build_decoder
+  subdir('mpglib')
+endif
 subdir('libmp3lame')
 if build_tools
   subdir('frontend')
