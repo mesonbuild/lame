@@ -1,4 +1,7 @@
-project('lame', 'c', version : '3.99.5')
+project('lame', 'c',
+        version : '3.100',
+        meson_version : '>=0.49',
+        license: 'LGPL-2.1+')
 
 cc = meson.get_compiler('c')
 cdata = configuration_data()
