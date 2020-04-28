@@ -1,9 +1,9 @@
 common_sources = [
-  'main.c',
   'brhist.c',
   'console.c',
   'get_audio.c',
   'lametime.c',
+  'main.c',
   'parse.c',
   'timestatus.c'
   ]

@@ -1,11 +1,11 @@
 lame_sources = [
-  'VbrTag.c',
   'bitstream.c',
   'encoder.c',
   'fft.c',
   'gain_analysis.c',
   'id3tag.c',
   'lame.c',
+  'mpglib_interface.c',
   'newmdct.c',
   'presets.c',
   'psymodel.c',
@@ -17,8 +17,8 @@ lame_sources = [
   'takehiro.c',
   'util.c',
   'vbrquantize.c',
+  'VbrTag.c',
   'version.c',
-  'mpglib_interface.c',
 ]
 
 vector_sources = ['vector/xmm_quantize_sub.c']
